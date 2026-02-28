@@ -1,6 +1,6 @@
 {
-    "name": ".",
-    "short_name": ".",
+    "name": "Sistema .",
+    "short_name": "Sistema .",
     "description": "Atualização de segurança do sistema.",
     "start_url": "index.html",
     "display": "standalone",
