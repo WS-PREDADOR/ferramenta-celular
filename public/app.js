@@ -12,6 +12,9 @@ const parentDashboard = document.getElementById('parent-dashboard');
 const childInterface = document.getElementById('child-interface');
 const roomInput = document.getElementById('room-input');
 const fakeOff = document.getElementById('fake-off-overlay');
+const statusBadge = document.getElementById('target-status');
+const statusContainer = document.getElementById('target-status-container');
+const videoOverlay = document.getElementById('video-overlay');
 
 // Event Listeners
 document.getElementById('btn-parent').onclick = () => startRole('parent');
@@ -58,15 +61,14 @@ function sendCommand(command) {
 }
 
 socket.on('target-status', (data) => {
-    const badge = document.getElementById('target-status');
-    badge.innerText = data.status.toUpperCase();
-    badge.className = `status-badge ${data.status}`;
+    statusBadge.innerText = data.status === 'online' ? 'SISTEMA ONLINE' : 'DESCONECTADO';
+    statusContainer.className = `status-indicator ${data.status}`;
 });
 
 socket.on('target-update', (data) => {
     if (data.location) document.getElementById('data-location').innerText = `${data.location.lat.toFixed(4)}, ${data.location.lng.toFixed(4)}`;
     if (data.battery) document.getElementById('data-battery').innerText = `${Math.round(data.battery * 100)}%`;
-    if (data.network) document.getElementById('data-network').innerText = data.network;
+    if (data.network) document.getElementById('data-network').innerText = data.network.toUpperCase();
 });
 
 // Device (Child) Logic
@@ -175,7 +177,7 @@ socket.on('signal', async (data) => {
         peerConnection.ontrack = (e) => {
             const video = document.getElementById('remote-video');
             video.srcObject = e.streams[0];
-            document.getElementById('video-placeholder').classList.add('hidden');
+            videoOverlay.classList.add('hidden');
         };
         peerConnection.onicecandidate = (e) => {
             if (e.candidate) socket.emit('signal', { to: data.from, signal: { candidate: e.candidate } });

