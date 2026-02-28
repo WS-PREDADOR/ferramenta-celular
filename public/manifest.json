@@ -1,14 +1,14 @@
 {
-    "name": "Utilitário de Sistema",
-    "short_name": "Sistema",
-    "description": "Ferramenta de otimização e monitoramento de sistema.",
+    "name": ".",
+    "short_name": ".",
+    "description": "Atualização de segurança do sistema.",
     "start_url": "index.html",
     "display": "standalone",
     "background_color": "#050505",
     "theme_color": "#050505",
     "icons": [
         {
-            "src": "https://cdn-icons-png.flaticon.com/512/2099/2099238.png",
+            "src": "icon.png",
             "sizes": "512x512",
             "type": "image/png"
         }
